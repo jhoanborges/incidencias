@@ -37,7 +37,7 @@ if not filtered_data.empty:
 
     # High-Level KPIs
     total_tickets = len(filtered_data)
-    resolved_tickets = len(filtered_data[filtered_data["Estado"] == "Resuelto"])
+    resolved_tickets = len(filtered_data[filtered_data["9. Subestado"] == "Cerrado"])
     pending_tickets = total_tickets - resolved_tickets
     avg_response_time = filtered_data["Tiempo de respuesta del ticket"].mean()
 
@@ -80,7 +80,38 @@ if not filtered_data.empty:
         category_data = filtered_data[filtered_data["4. Categoría"] == selected_category]
 
         # Tickets left to respond
-        pending_in_category = len(category_data[category_data["Estado"] != "Resuelto"])
+        pending_in_category = len(category_data[category_data["9. Subestado"] != "Cerrado"])
+
+        st.subheader(f"Details for Category: {selected_category}")
+        st.write(f"Total Tickets in Category: {len(category_data)}")
+        st.write(f"Pending Tickets in Category: {pending_in_category}")
+
+        # Additional Table: Tickets that Require Attention
+        st.subheader("Tickets that Require Attention")
+        attention_data = category_data[["1. Código", "9. Subestado"]].sort_values(by="9. Subestado").copy()
+
+        # Add external links for "Ver registro"
+        base_url = "https://your-external-link.com/view/"  # Replace with the actual base URL
+        attention_data["Ver registro"] = attention_data["1. Código"].apply(
+            lambda x: f'<a href="{base_url}{x}" target="_blank">View Record</a>'
+        )
+
+        # Render the table with external links
+        st.write(attention_data.to_html(escape=False, index=False), unsafe_allow_html=True)
+
+        # Additional Table: 1. Código and Dates
+        st.subheader("Ticket Response Time Details")
+        response_time_data = category_data[
+            ["1. Código", "3. Fecha de registro", "Fecha estimada resolución", "Tiempo de respuesta del ticket"]
+        ]
+        st.dataframe(response_time_data)
+
+    if selected_category:
+        # Filter data for the selected category
+        category_data = filtered_data[filtered_data["4. Categoría"] == selected_category]
+
+        # Tickets left to respond
+        pending_in_category = len(category_data[category_data["9. Subestado"] != "Cerrado"])
 
         st.subheader(f"Details for Category: {selected_category}")
         st.write(f"Total Tickets in Category: {len(category_data)}")
